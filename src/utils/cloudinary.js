@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from fs;
+import fs from "fs";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -17,10 +17,16 @@ const uploadOnCloudinary = async (filepath) => {
             resource_type: "auto",
         })
 
-        fs.unlinkSync(filepath)
+        fs.unlink(filepath, (err) => {
+            if (err) console.error("❌ Error deleting temp file:", err);
+        });
         return response;
     } catch (error) {
-        fs.unlinkSync(filepath); // remove the locally save tempapory file if operation got failed
+        if (filepath) {
+            fs.unlink(filepath, (err) => {
+                if (err) console.error("❌ Error cleaning temp file:", err);
+            });
+        }
         console.error("Error uploading file to Cloudinary:", error);
         return null;
     }
