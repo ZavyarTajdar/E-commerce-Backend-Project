@@ -9,7 +9,7 @@ const CardSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    product: [
+    products: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Product"
@@ -17,17 +17,8 @@ const CardSchema = new mongoose.Schema({
     ],
     categories: [
         {
-            name: {
-                type: String,
-                required: true
-            },
-            image: {
-                type: String,
-                required: true
-            },
-            link: {
-                type: String
-            }
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Category"
         }
     ],
     bannerImage: {
@@ -38,6 +29,10 @@ const CardSchema = new mongoose.Schema({
     },
     linkUrl: {
         type: String
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true })
 

@@ -26,12 +26,12 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
     avatar: {
-        type: String,
-        required: true
+        type: String
     },
     phoneNumber: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     address: {
         street: { type: String },
@@ -47,6 +47,10 @@ const UserSchema = new mongoose.Schema({
     },
     refreshToken: {
         type: String,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     },
     searchHistory: [
         {
