@@ -34,16 +34,8 @@ const UserSchema = new mongoose.Schema({
         unique: true
     },
     address: {
-        street: { type: String },
-        city: { type: String },
-        state: { type: String },
-        postalCode: { type: String },
-        country: { type: String, default: "Pakistan" },
-    },
-    role: {
-        type: String,
-        enum: ["customer", "admin"],
-        default: "customer",
+        type : mongoose.Schema.Types.ObjectId,
+        ref : "Address"
     },
     refreshToken: {
         type: String,
@@ -52,12 +44,6 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    searchHistory: [
-        {
-            query: { type: String },
-            searchedAt: { type: Date, default: Date.now } // when user searched
-        }
-    ]
 }, { timestamps: true })
 
 // Encrypt the Password 
