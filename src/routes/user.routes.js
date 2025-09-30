@@ -1,18 +1,36 @@
-import { Router } from 'express';
-
+import { Router } from "express";
 import {
-    registerUser
-} from "../controllers/user.controller.js"
-import { upload } from "../middlewares/multer.middleware.js"
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    ChangeCurrentUserPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    deleteUserAccount,
+    CreateAddress,
+    // FetchUserAddress
+} from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-const router = Router()
+const router = Router();
 
-router.route('/register-user').post(
-    upload.single(
-        "avatar"
-    ),
-    registerUser
-)
+// Public routes
+router.post("/register", upload.single("avatar"), registerUser);
+router.post("/login", loginUser);
+router.post("/refresh-token", refreshAccessToken);
+
+// Protected routes
+router.post("/logout", verifyJWT, logoutUser);
+router.post("/change-password", verifyJWT, ChangeCurrentUserPassword);
+router.get("/me", verifyJWT, getCurrentUser);
+router.put("/update", verifyJWT, updateAccountDetails);
+router.put("/update-avatar", verifyJWT, upload.single("avatar"), updateUserAvatar);
+router.delete("/delete", verifyJWT, deleteUserAccount);
+router.post("/create-address", verifyJWT, CreateAddress);
+// router.get("/fetch-address", verifyJWT, FetchUserAddress);
+
 
 export default router;

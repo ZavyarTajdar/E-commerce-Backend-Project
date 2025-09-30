@@ -68,27 +68,34 @@ const registerUser = asyncHandler(async (req, res) => {
 })
 
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body
+    // 1: req body - username, password
+    // 2:  if user already exists
+    // 3:  username or password 
+    // 4:  password compare - if user exists
+    // 5:  access token and refresh token
+    // 6:  send cookie 
 
-    if (!email || !password) {
-        throw new ApiError(400, "All Field Are Rquired")
+    // Step 1
+    const { email, username, password } = req.body
+
+    if (!username && !email) {
+        throw new ApiError(404, "Give Atleast One Email or Username");
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ $or: [{ email }, { username }] }).select("+password")
 
     if (!user) {
-        throw new ApiError(404, "User not found")
+        throw new ApiError(404, "User Does Not Exist")
     }
 
-    const isPasswordMatched = await user.comparePassword(password)
+    const isPasswordValid = await user.isPasswordCorrect(password)
 
-    if (!isPasswordMatched) {
-        throw new ApiError(401, "Password Must Be Wrong")
+    if (!isPasswordValid) {
+        throw new ApiError(404, "Password is required");
     }
 
     const { accessToken, refreshToken } = await generateAcessAndRefreshToken(user._id)
-    const LoggedInUser = await User.findById(user._id)
-        .select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const option = {
         httpOnly: true,
@@ -100,9 +107,8 @@ const loginUser = asyncHandler(async (req, res) => {
         .cookie("accessToken", accessToken, option)
         .cookie("refreshToken", refreshToken, option)
         .json(
-            new ApiResponse(200, { user: LoggedInUser, accessToken, refreshToken }, "User logged in successfully"),
+            new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"),
         )
-
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -150,7 +156,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Unauthorized request - Token mismatch");
         }
 
-        const { accessToken, newRefreshToken } = await generateAcessAndRefreshToken(user._id)
+        const { accessToken, refreshToken } = await generateAcessAndRefreshToken(user._id)
         const option = {
             httpOnly: true,
             secure: true
@@ -159,9 +165,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         return res
         .status(200)
         .cookie("accessToken", accessToken, option)
-        .cookie("refreshToken", newRefreshToken, option)
+        .cookie("refreshToken", refreshToken, option)
         .json(
-            new ApiResponse(200, { accessToken, newRefreshToken },
+            new ApiResponse(200, { accessToken, refreshToken },
             "Access token Regenerated successfully")
         )
     } catch (error) {
@@ -276,6 +282,72 @@ const deleteUserAccount = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User Deleted Successfully"))
 })
 
+const CreateAddress = asyncHandler(async (req, res) => {
+    const { street, city, state, postalCode, country } = req.body;
+
+    if (!(street && city && state && postalCode && country)) {
+        throw new ApiError(400, "All fields are strictly required!");
+    }
+
+    const userId = req.user._id; // assuming user is authenticated via JWT
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found!");
+    }
+
+    // Push new address into user's address array
+    const newAddress = {
+        street,
+        city,
+        state,
+        postalCode,
+        country
+    };
+
+    user.address.push(newAddress);
+    await user.save();
+
+    return res.status(201).json(
+        new ApiResponse(201, user.address, "Address created successfully")
+    );
+});
+
+// const FetchUserAddress = asyncHandler(async (req, res) => {
+//     const user = req.user._id;
+//     const FetchDetails = await User.aggregate([
+//         {
+//             $match : { _id : new mongoose.Schema.Types.ObjectId(user)} 
+//         },
+//         {
+//             $lookup : {
+//                 from: "addresses",
+//                 localField: "_id",
+//                 foreignField: "user",
+//                 as : "AddressDetails"
+//             }
+//         },
+//         {
+//             $unwind : "$AddressDetails"
+//         },
+//         {
+//             $project : {
+//                 country : "$AddressDetails.country",
+//                 city : "$AddressDetails.city",
+//                 state : "$AddressDetails.state",
+//                 postalCode : "$AddressDetails.postalCode",
+//                 street : "$AddressDetails.street",
+//             }
+//         }
+//     ])
+
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200, FetchDetails[0] || {}, "Details Fetched To User")
+//     )
+// })
 export {
     registerUser,
     loginUser,
@@ -285,5 +357,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    deleteUserAccount
+    deleteUserAccount,
+    CreateAddress,
+    // FetchUserAddress
 }

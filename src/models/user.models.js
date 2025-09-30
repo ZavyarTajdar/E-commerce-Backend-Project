@@ -33,10 +33,13 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    address: {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Address"
-    },
+    address: [{
+        street: { type: String },
+        city: { type: String },
+        state: { type: String },
+        postalCode: { type: String },
+        country: { type: String, default: "Pakistan" },
+    }],
     refreshToken: {
         type: String,
     },
@@ -60,7 +63,7 @@ UserSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 }
 
-UserSchema.methods.generateRefreshToken = async function () {
+UserSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -75,7 +78,7 @@ UserSchema.methods.generateRefreshToken = async function () {
     )
 }
 
-UserSchema.methods.generateAccessToken = async function () {
+UserSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
             _id: this._id,
