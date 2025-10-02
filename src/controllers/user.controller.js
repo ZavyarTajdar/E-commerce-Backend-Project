@@ -297,6 +297,15 @@ const CreateAddress = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found!");
     }
 
+    const existedaddress = user.address.find(addr => addr.country === country 
+        && addr.city === city && addr.state === state && addr.postalCode === postalCode 
+        && addr.street === street
+    );
+
+    if (existedaddress) {
+        throw new ApiError(400, "Address already exists!");
+    }
+
     // Push new address into user's address array
     const newAddress = {
         street,
@@ -314,40 +323,15 @@ const CreateAddress = asyncHandler(async (req, res) => {
     );
 });
 
-// const FetchUserAddress = asyncHandler(async (req, res) => {
-//     const user = req.user._id;
-//     const FetchDetails = await User.aggregate([
-//         {
-//             $match : { _id : new mongoose.Schema.Types.ObjectId(user)} 
-//         },
-//         {
-//             $lookup : {
-//                 from: "addresses",
-//                 localField: "_id",
-//                 foreignField: "user",
-//                 as : "AddressDetails"
-//             }
-//         },
-//         {
-//             $unwind : "$AddressDetails"
-//         },
-//         {
-//             $project : {
-//                 country : "$AddressDetails.country",
-//                 city : "$AddressDetails.city",
-//                 state : "$AddressDetails.state",
-//                 postalCode : "$AddressDetails.postalCode",
-//                 street : "$AddressDetails.street",
-//             }
-//         }
-//     ])
+const GetUserAdresses = asyncHandler(async (req, res) => {
+    const user = req.user.address
 
-//     return res
-//     .status(200)
-//     .json(
-//         new ApiResponse(200, FetchDetails[0] || {}, "Details Fetched To User")
-//     )
-// })
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, "Details Fetched To User")
+    )
+})
 export {
     registerUser,
     loginUser,
@@ -359,5 +343,5 @@ export {
     updateUserAvatar,
     deleteUserAccount,
     CreateAddress,
-    // FetchUserAddress
+    GetUserAdresses
 }

@@ -1,0 +1,139 @@
+import { Product } from "../models/product.models.js"
+import { User } from "../models/user.models.js"
+import { nanoid } from "nanoid"
+import { asyncHandler } from "../utils/asyncHandler.js"
+import { ApiError } from "../utils/ApiError.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteOldImage } from "../utils/deleteOldImage.js"
+
+const createProduct = asyncHandler(async (req, res) => {
+    const { title, description, stock, price } = req.body
+    let { sku, barcode } = req.body
+
+    if (!title || !description || !stock || !price) {
+        throw new ApiError(400, "Everthing Is neccesary")
+    }
+
+    if (!req.files.pictures || req.files.pictures.length === 0) {
+        throw new ApiError(400, "At least one picture is required")
+    }
+
+    const pictures = await Promise.all(
+        req.files.pictures.map(file => uploadOnCloudinary(file.path))
+    )
+
+    const pictureUrls = pictures.map(pic => pic?.url).filter(Boolean);
+
+    let video = null;
+    if (req.files?.video?.[0]) {
+        const uploadedVideo = await uploadOnCloudinary(req.files.video[0].path);
+        video = uploadedVideo?.url || null;
+    }
+
+    if (!sku) {
+        sku = `SKU-${nanoid(8)}`  // e.g. "SKU-ab12cd34"
+    }
+    if (!barcode) {
+        barcode = `BAR-${nanoid(15)}` // e.g. "BAR-x9f0s1k2l3"
+    }
+    const existingProduct = await Product.findOne({ $or: [{ sku }, { barcode }] })
+    if (existingProduct) {
+        throw new ApiError(400, "Product already exists")
+    }
+
+    const product = await Product.create({
+        title,
+        description,
+        stock,
+        price,
+        sku,
+        barcode,
+        pictures: pictureUrls,
+        video
+    })
+
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(201, product, "Product created successfully"
+            ))
+})
+
+const getAllProducts = asyncHandler(async (req, res) => {
+    // TODO: fetch all products with pagination (use mongooseAggregatePaginate)
+    // TODO: allow filters: category, seller, isFeatured, price range, availability
+    // TODO: allow search by title/description
+    // TODO: return paginated response
+
+
+})
+
+// Get single product by ID
+const getSingleProduct = asyncHandler(async (req, res) => {
+    // TODO: fetch product by ID
+    // TODO: populate category and seller
+    // TODO: return product details
+})
+
+// Update product
+const updateProduct = asyncHandler(async (req, res) => {
+    // TODO: extract updated fields from req.body
+    // TODO: handle image/video update (replace or add)
+    // TODO: update variants if provided
+    // TODO: update product in DB
+    // TODO: return updated product
+})
+
+// Delete product
+const deleteProduct = asyncHandler(async (req, res) => {
+    // TODO: find product by ID
+    // TODO: delete product (or mark as unavailable for soft delete)
+    // TODO: return success message
+})
+
+// Search products
+const searchProducts = asyncHandler(async (req, res) => {
+    // TODO: get search keyword from query
+    // TODO: search in title + description fields
+    // TODO: return matched products
+})
+
+// Filter products
+const filterProducts = asyncHandler(async (req, res) => {
+    // TODO: get filters (category, seller, price range, isFeatured, isAvailable)
+    // TODO: query DB with filters
+    // TODO: return filtered products
+})
+
+// Get featured products
+const getFeaturedProducts = asyncHandler(async (req, res) => {
+    // TODO: fetch products where isFeatured = true
+    // TODO: return featured products
+})
+
+// Update stock after purchase
+const updateProductStock = asyncHandler(async (req, res) => {
+    // TODO: get productId and quantity from req.body
+    // TODO: reduce stock based on purchased quantity
+    // TODO: update ratings if needed
+    // TODO: return updated stock info
+})
+
+// Rate a product
+const rateProduct = asyncHandler(async (req, res) => {
+    // TODO: get productId, rating from req.body
+})
+
+export {
+    createProduct,
+    getAllProducts,
+    getSingleProduct,
+    updateProduct,
+    deleteProduct,
+    searchProducts,
+    filterProducts,
+    getFeaturedProducts,
+    updateProductStock,
+    rateProduct
+}

@@ -10,7 +10,7 @@ import {
     updateUserAvatar,
     deleteUserAccount,
     CreateAddress,
-    // FetchUserAddress
+    GetUserAdresses
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -30,7 +30,7 @@ router.put("/update", verifyJWT, updateAccountDetails);
 router.put("/update-avatar", verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.delete("/delete", verifyJWT, deleteUserAccount);
 router.post("/create-address", verifyJWT, CreateAddress);
-// router.get("/fetch-address", verifyJWT, FetchUserAddress);
+router.get("/fetch-address", verifyJWT, GetUserAdresses);
 
 
 export default router;

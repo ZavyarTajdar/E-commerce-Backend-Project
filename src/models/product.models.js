@@ -35,28 +35,23 @@ const ProductSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
-    variants: [
-        variantSchema
-    ],
+    // variants: [
+    //     variantSchema
+    // ],
     isFeatured: {
         type: Boolean,
         default: false,
         index: true
     },
-    seller: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
-        required: true
-    },
-    isAvailable: {
-        type: Boolean,
-        required: true
-    },
+    // category: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Category",
+    //     required: true
+    // },
+    // isAvailable: {
+    //     type: Boolean,
+    //     required: true
+    // },
     price: {
         type: String,
         required: true
