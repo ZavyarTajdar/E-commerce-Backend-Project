@@ -8,7 +8,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { deleteOldImage } from "../utils/deleteOldImage.js"
 
 const createProduct = asyncHandler(async (req, res) => {
-    const { title, description, stock, price } = req.body
+    const { title, description, stock, price, variants, categoryId  } = req.body
     let { sku, barcode } = req.body
 
     if (!title || !description || !stock || !price) {
@@ -51,30 +51,87 @@ const createProduct = asyncHandler(async (req, res) => {
         sku,
         barcode,
         pictures: pictureUrls,
-        video
+        video,
+        category: req.body.categoryId,
+        variants: variants ? JSON.parse(variants) : [] // condition ? valueIfTrue : valueIfFalse
     })
 
     return res
-        .status(201)
-        .json(
-            new ApiResponse(201, product, "Product created successfully"
-            ))
+    .status(201)
+    .json(
+        new ApiResponse(201, product, "Product created successfully")
+    )
 })
 
 const getAllProducts = asyncHandler(async (req, res) => {
-    // TODO: fetch all products with pagination (use mongooseAggregatePaginate)
-    // TODO: allow filters: category, seller, isFeatured, price range, availability
-    // TODO: allow search by title/description
-    // TODO: return paginated response
+    const { 
+        page = 1, 
+        limit = 10, 
+        search = "", 
+        category, 
+        isFeatured, 
+        minPrice, 
+        maxPrice, 
+        isAvailable 
+    } = req.query;
 
+    const query = {};
+
+    if (search) {
+        query.$or = [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    if (category) query.category = category;
+    if (isFeatured) query.isFeatured = isFeatured === "true";
+    if (isAvailable) query.isAvailable = isAvailable === "true";
+    if (minPrice || maxPrice) {
+        query.price = {};
+        if (minPrice) query.price.$gte = Number(minPrice);
+        if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    const products = await Product.find(query)
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .populate("category", "name")
+    .populate("seller", "name email");
+    
+    const total = await Product.countDocuments()
+    const totalPages = Math.ceil(total / limit);
+    return res.status(200).json({
+        success: true,
+        total,
+        totalPages,
+        page: Number(page),
+        limit: Number(limit),
+        products
+    })
 
 })
 
-// Get single product by ID
 const getSingleProduct = asyncHandler(async (req, res) => {
-    // TODO: fetch product by ID
-    // TODO: populate category and seller
-    // TODO: return product details
+
+    const { productId } = req.params
+
+    if (!productId) {
+        throw new ApiError(400, "product Id Is Required");
+    }
+
+    const product = await Product.findById(productId)
+    .populate("category", "name")
+
+    if (!product) {
+        throw new ApiError(404, "Product Not Found");
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, product, "Product fetched successfully")
+    )
 })
 
 // Update product

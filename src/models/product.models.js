@@ -35,30 +35,33 @@ const ProductSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
-    // variants: [
-    //     variantSchema
-    // ],
+    variants: [
+        variantSchema
+    ],
     isFeatured: {
         type: Boolean,
         default: false,
         index: true
     },
-    // category: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Category",
-    //     required: true
-    // },
-    // isAvailable: {
-    //     type: Boolean,
-    //     required: true
-    // },
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+        default: "Shirts"
+    },
+    isAvailable: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
     price: {
-        type: String,
+        type: Number,
         required: true
     },
     stock: {
-        type: String,
-        required: true
+        type: Number,
+        required: true,
+        default: 1
     },
     ratings: {
         average: {
