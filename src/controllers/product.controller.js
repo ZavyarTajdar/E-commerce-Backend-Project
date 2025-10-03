@@ -37,6 +37,7 @@ const createProduct = asyncHandler(async (req, res) => {
     if (!barcode) {
         barcode = `BAR-${nanoid(15)}` // e.g. "BAR-x9f0s1k2l3"
     }
+    // nanoid generates unique Strings
     const existingProduct = await Product.findOne({ $or: [{ sku }, { barcode }] })
     if (existingProduct) {
         throw new ApiError(400, "Product already exists")
