@@ -17,7 +17,7 @@ const CategorySchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    image: {
+    thumbnail: {
       type: String, // category banner ya thumbnail
     },
     parentCategory: {
@@ -28,6 +28,10 @@ const CategorySchema = new mongoose.Schema(
     isFeatured: {
       type: Boolean,
       default: false, // homepage par dikhana hai ya nahi
+    },
+    isActive: {
+      type: Boolean,
+      default: true, // soft delete ke liye
     },
   },
   { timestamps: true }
