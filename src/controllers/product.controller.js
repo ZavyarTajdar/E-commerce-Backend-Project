@@ -1,12 +1,9 @@
 import { Product, Product } from "../models/product.models.js"
-import { User } from "../models/user.models.js"
 import { nanoid } from "nanoid"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
-import { deleteOldImage } from "../utils/deleteOldImage.js"
-import e from "express"
 
 const createProduct = asyncHandler(async (req, res) => {
     const { title, description, stock, price, variants, categoryId  } = req.body
