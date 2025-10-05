@@ -49,6 +49,10 @@ const ProductSchema = new mongoose.Schema({
         required: true,
         default: "Shirts"
     },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     isAvailable: {
         type: Boolean,
         required: true,

@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { deleteOldImage } from "../utils/deleteOldImage.js"
+import e from "express"
 
 const createProduct = asyncHandler(async (req, res) => {
     const { title, description, stock, price, variants, categoryId  } = req.body
@@ -155,8 +156,6 @@ const updateProduct = asyncHandler(async (req, res) => {
         price,
         variants,
         categoryId,
-        isAvailable,
-        isFeatured
     } = req.body;
 
     let pictureUrl = product.pictures || [];
@@ -192,9 +191,7 @@ const updateProduct = asyncHandler(async (req, res) => {
             pictures: pictureUrl,
             video: videoUrl,
             variants: parseVariants,
-            ...(categoryId && { category: categoryId }),
-            ...(isAvailable !== undefined && { isAvailable }),
-            ...(isFeatured !== undefined && { isFeatured })
+            ...(categoryId && { category: categoryId })
         },
         { new: true }
     )
@@ -211,11 +208,92 @@ const updateProduct = asyncHandler(async (req, res) => {
         
 })
 
-// Delete product
-const deleteProduct = asyncHandler(async (req, res) => {
-    // TODO: find product by ID
-    // TODO: delete product (or mark as unavailable for soft delete)
-    // TODO: return success message
+const SoftdeleteProduct = asyncHandler(async (req, res) => {
+
+    const { productId } = req.params;
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }
+    const product = await Product.findById(productId)
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    if (!product.stock === 0) {
+        product.isActive = false;
+    }
+
+    await product.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                product,
+                "Product Soft Deleted Successfully"
+            )
+        )
+})
+
+const toggleAvailability = asyncHandler(async (req, res) => {
+    const { productId } = req.params;
+    
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }
+    const product = await Product.findById(productId)
+
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    if (product.stock === 0) {
+        product.isAvailable = false;
+    }else {
+        product.isAvailable = true;
+    }
+    await product.save();
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                product,
+                "Product Availability Toggled Successfully"
+            )
+        )
+}) 
+
+const toggleIsFeatured = asyncHandler(async (req, res) => {
+    const { productId } = req.params;
+    
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }
+    const product = await Product.findById(productId)
+
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    if (!product.isFeatured) {
+        product.isFeatured = true
+    }else {
+        product.isFeatured = false
+    }
+
+    await product.save()
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                product,
+                "Product Availability Toggled Successfully"
+            )
+        )
 })
 
 // Search products
@@ -256,10 +334,12 @@ export {
     getAllProducts,
     getSingleProduct,
     updateProduct,
-    deleteProduct,
+    SoftdeleteProduct,
     searchProducts,
     filterProducts,
     getFeaturedProducts,
     updateProductStock,
-    rateProduct
+    rateProduct,
+    toggleIsFeatured,
+    toggleAvailability
 }
