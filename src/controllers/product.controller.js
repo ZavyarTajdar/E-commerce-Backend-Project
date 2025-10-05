@@ -1,4 +1,4 @@
-import { Product } from "../models/product.models.js"
+import { Product, Product } from "../models/product.models.js"
 import { User } from "../models/user.models.js"
 import { nanoid } from "nanoid"
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -134,13 +134,81 @@ const getSingleProduct = asyncHandler(async (req, res) => {
     )
 })
 
-// Update product
 const updateProduct = asyncHandler(async (req, res) => {
-    // TODO: extract updated fields from req.body
-    // TODO: handle image/video update (replace or add)
-    // TODO: update variants if provided
-    // TODO: update product in DB
-    // TODO: return updated product
+
+    const { productId } = req.params;
+
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }
+    
+    const product = await Product.findById(productId)
+
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    const {
+        title,
+        description,
+        stock,
+        price,
+        variants,
+        categoryId,
+        isAvailable,
+        isFeatured
+    } = req.body;
+
+    let pictureUrl = product.pictures || [];
+    if (req.files?.pictures?.length) {
+        const uploadedPictures  = await Promise.all(
+            req.files.pictures.map(files => uploadOnCloudinary(files.path))
+        )
+        pictureUrl = uploadedPictures .map(pic => pic?.url).filter(Boolean)
+    }
+
+    let videoUrl = product.video || null;
+    if (req.files?.video?.[0]?.path) {
+        const uploadedVideo = await uploadOnCloudinary(req.files.video[0].path);
+        videoUrl = uploadedVideo?.url || null;
+    }
+
+    let parseVariants = product.variants || [];
+    if (variants) {
+        try {
+            parseVariants = typeof variants === "string" ? JSON.parse(variants) : variants;
+        } catch (error) {
+            throw new ApiError(400, "Invalid JSON format for variants");
+        }  
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        {
+            ...(title && { title }),
+            ...(description && { description }),
+            ...(stock && { stock }),
+            ...(price && { price }),
+            pictures: pictureUrl,
+            video: videoUrl,
+            variants: parseVariants,
+            ...(categoryId && { category: categoryId }),
+            ...(isAvailable !== undefined && { isAvailable }),
+            ...(isFeatured !== undefined && { isFeatured })
+        },
+        { new: true }
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            updatedProduct,
+            "Product Updated Successfully"
+        )
+    )
+        
 })
 
 // Delete product
