@@ -68,12 +68,6 @@ const registerUser = asyncHandler(async (req, res) => {
 })
 
 const loginUser = asyncHandler(async (req, res) => {
-    // 1: req body - username, password
-    // 2:  if user already exists
-    // 3:  username or password 
-    // 4:  password compare - if user exists
-    // 5:  access token and refresh token
-    // 6:  send cookie 
 
     // Step 1
     const { email, username, password } = req.body
@@ -324,12 +318,12 @@ const CreateAddress = asyncHandler(async (req, res) => {
 });
 
 const GetUserAdresses = asyncHandler(async (req, res) => {
-    const user = req.user.address
-
+    const userAddresses = req.user.address
+    const user = req.user._id
     return res
     .status(200)
     .json(
-        new ApiResponse(200, user, "Details Fetched To User")
+        new ApiResponse(200, userAddresses, user, "Details Fetched To User")
     )
 })
 export {

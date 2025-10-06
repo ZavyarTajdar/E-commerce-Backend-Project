@@ -1,4 +1,4 @@
-import { Product, Product } from "../models/product.models.js"
+import { Product } from "../models/product.models.js"
 import { nanoid } from "nanoid"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
@@ -293,18 +293,57 @@ const toggleIsFeatured = asyncHandler(async (req, res) => {
         )
 })
 
-// Search products
 const searchProducts = asyncHandler(async (req, res) => {
-    // TODO: get search keyword from query
-    // TODO: search in title + description fields
-    // TODO: return matched products
+    const { search } = req.query;
+    if (!search) {
+        throw new ApiError(400, "Search query is required");
+    }
+    const products = await Product.find({
+        $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+        ]
+    })
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, products, "Search results fetched successfully")
+    )
 })
 
-// Filter products
 const filterProducts = asyncHandler(async (req, res) => {
-    // TODO: get filters (category, seller, price range, isFeatured, isAvailable)
-    // TODO: query DB with filters
-    // TODO: return filtered products
+    const { category, minPrice, maxPrice, isFeatured, isAvailable } = req.query;
+    
+    const query = {};
+
+    if (category) {
+        query.category = category
+    }
+
+    if (minPrice || maxPrice) {
+        query.price = {}
+        if(minPrice) query.price.$gte = Number(minPrice)
+        if(maxPrice) query.price.$lte = Number(maxPrice)    
+    }
+
+    if (isFeatured !== undefined) {
+        query.isFeatured = isFeatured === "true"
+    }
+
+    if (isAvailable !== undefined) {
+        query.isAvailable = isAvailable === "true"
+    }
+
+    const products = await Product.find(query)
+    .populate("category", "name slug")
+    .sort({ createdAt: -1})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, products, "Filtered products fetched successfully")
+    );
 })
 
 // Get featured products
