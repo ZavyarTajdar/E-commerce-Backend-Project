@@ -346,23 +346,85 @@ const filterProducts = asyncHandler(async (req, res) => {
     );
 })
 
-// Get featured products
 const getFeaturedProducts = asyncHandler(async (req, res) => {
     // TODO: fetch products where isFeatured = true
     // TODO: return featured products
+
+    const products = await Product.find({ isFeatured: true})
+    .populate("category", "name slug")
+    .sort({ createdAt: -1})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, products, "Featured products fetched successfully")
+    );
 })
 
-// Update stock after purchase
 const updateProductStock = asyncHandler(async (req, res) => {
-    // TODO: get productId and quantity from req.body
-    // TODO: reduce stock based on purchased quantity
-    // TODO: update ratings if needed
-    // TODO: return updated stock info
+    
+    const { productId } = req.params;
+    const { stock } = req.body;
+
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }
+
+    const product = await Product.findById(productId)
+
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    product.stock = stock
+    await Product.save()
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            product,
+            "Product Stock Updated Successfully"
+        )
+    )
 })
 
-// Rate a product
 const rateProduct = asyncHandler(async (req, res) => {
-    // TODO: get productId, rating from req.body
+    const { productId } = req.params;
+    const { rating } = req.body;
+    if (!productId) {
+        throw new ApiError(400, "Product Id Is Necessary")
+    }   
+    if (!rating || rating < 1 || rating > 5) {
+        throw new ApiError(400, "Rating must be between 1 and 5")
+    }
+    const product = await Product.findById(productId)
+
+    if (!product) {
+        throw new ApiError(404, "Product Does Not Found Or Not Exist")
+    }
+
+    const currentAvg = product.ratings.average
+    const currentCount = product.ratings.count
+
+    const newCount = currentCount + 1;
+    const newAvg = ((currentAvg * currentCount) + rating) / newCount
+
+    product.ratings.average = newAvg.toFixed(1);
+    product.ratings.count = newCount
+
+    await product.save()
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            product,
+            "Product Rated Successfully"
+        )
+    )
 })
 
 export {
