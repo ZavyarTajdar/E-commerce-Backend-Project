@@ -39,11 +39,8 @@ const UserSchema = new mongoose.Schema({
         unique: true
     },
     address: [{
-        street: { type: String },
-        city: { type: String },
-        state: { type: String },
-        postalCode: { type: String },
-        country: { type: String, default: "Pakistan" },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Address"
     }],
     refreshToken: {
         type: String,

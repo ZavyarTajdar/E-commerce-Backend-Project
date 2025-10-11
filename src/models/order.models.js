@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { type } from "os";
+import { ref } from "process";
 
 const OrderSchema = new mongoose.Schema(
   {
@@ -14,18 +16,16 @@ const OrderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        name: { type: String, required: true }, // snapshot of product name
-        price: { type: Number, required: true }, // snapshot of price
-        quantity: { type: Number, required: true },
+        quantity: {
+          type: Number,
+          required: true,
+        },
       },
     ],
     shippingAddress: {
-      fullName: { type: String, required: true },
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String },
-      postalCode: { type: String, required: true },
-      country: { type: String, required: true },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Address",
+      required: true,
     },
     orderStatus: {
       type: String,
