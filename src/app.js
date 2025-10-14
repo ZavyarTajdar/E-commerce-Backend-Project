@@ -20,6 +20,7 @@ import userRoutes from "./routes/user.routes.js";
 import productsRoutes from "./routes/products.routes.js";
 import adminProductsRoutes from "./routes/admin.products.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 // Routes Declaration
 
@@ -27,5 +28,6 @@ app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/products", productsRoutes)
 app.use("/api/v1/admin", adminProductsRoutes)
 app.use("/api/v1/admin/category", categoryRoutes)
+app.use("/api/v1/orders", orderRoutes)
 
 export default app;

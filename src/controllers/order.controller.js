@@ -77,10 +77,26 @@ const getUserOrders = asyncHandler(async (req, res) => {
 });
 
 const getOrderById = asyncHandler(async (req, res) => {
-    // TODO: Extract order ID from params
-    // TODO: Find order by ID and populate product + user info
-    // TODO: Verify user ownership or admin role
-    // TODO: Return order details
+    const { orderId } = req.params
+
+    if (!orderId) {
+        throw new ApiError(400, "order Id is Required")
+    }
+
+    const order = await Order.findById(orderId).
+    populate("items.product" , "title description price sku barcode").
+    populate("user", "_id username email")
+
+
+    if (!order) {
+        throw new ApiError(404, "Order Not Found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, order, "Order Fetched Successfully")
+    )
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {

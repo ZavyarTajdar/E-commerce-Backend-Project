@@ -11,7 +11,7 @@ const AddressSchema = new mongoose.Schema({
         type: String 
     },
     postalCode: { 
-        type: String 
+        type: Number 
     },
     country: {
         type: String, 
