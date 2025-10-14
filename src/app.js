@@ -18,13 +18,14 @@ app.use(cookieParser())
 
 import userRoutes from "./routes/user.routes.js";
 import productsRoutes from "./routes/products.routes.js";
-import adminProductsRoutes from "./routes/products.routes.js";
-
+import adminProductsRoutes from "./routes/admin.products.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
 // Routes Declaration
 
 app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/products", productsRoutes)
-app.use("/api/v1/admin/products", adminProductsRoutes)
+app.use("/api/v1/admin", adminProductsRoutes)
+app.use("/api/v1/admin/category", categoryRoutes)
 
 export default app;

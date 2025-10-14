@@ -2,7 +2,7 @@ import { Router } from "express";
 import { 
   createProduct, 
   updateProduct, 
-  deleteProduct,
+  SoftdeleteProduct,
   toggleIsFeatured,
   toggleAvailability,
   updateProductStock,
@@ -24,14 +24,14 @@ router.post(
   createProduct
 );
 
-router.put("/products/:id", updateProduct);
+router.put("/products/:productId", updateProduct);
 
-router.delete("/products/:id", deleteProduct);
+router.delete("/products/:productId", SoftdeleteProduct);
 
-router.patch("/products/:id/featured", toggleIsFeatured);
+router.patch("/products/:productId/featured", toggleIsFeatured);
 
-router.patch("/products/:id/availability", toggleAvailability);
+router.patch("/products/:productId/availability", toggleAvailability);
 
-router.patch("/products/:id/stock", updateProductStock);
+router.patch("/products/:productId/stock", updateProductStock);
 
 export default router;

@@ -1,8 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { uploadOnCloudinary } from "../utils/Cloudinary.js"
-import { Category, Category } from "../models/category.models.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { Category } from "../models/category.models.js"
 import slugify from "slugify";
 
 const createCategory = asyncHandler(async (req, res) => {

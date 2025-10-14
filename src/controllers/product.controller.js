@@ -4,10 +4,16 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { Category } from "../models/category.models.js"
 
 const createProduct = asyncHandler(async (req, res) => {
     const { title, description, stock, price, variants, categoryId  } = req.body
     let { sku, barcode } = req.body
+
+    const category = await Category.findById(categoryId)
+    if (!category) {
+    throw new ApiError(404, "Category not found");
+    }
 
     if (!title || !description || !stock || !price) {
         throw new ApiError(400, "Everthing Is neccesary")
@@ -50,9 +56,15 @@ const createProduct = asyncHandler(async (req, res) => {
         barcode,
         pictures: pictureUrls,
         video,
-        category: req.body.categoryId,
+        category: {
+            _id: category._id,
+            name: category.name,
+            description: category.description
+        },
         variants: variants ? JSON.parse(variants) : [] // condition ? valueIfTrue : valueIfFalse
     })
+
+    await product.populate("category", "name description");
 
     return res
     .status(201)
@@ -280,7 +292,7 @@ const toggleIsFeatured = asyncHandler(async (req, res) => {
         product.isFeatured = false
     }
 
-    await product.save()
+    await product.save({ validateBeforeSave: false })
 
     return res
         .status(200)
