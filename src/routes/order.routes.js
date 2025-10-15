@@ -3,15 +3,24 @@ import {
     createOrder,
     getUserOrders,
     getOrderById,
+    updateOrderStatus,
+    cancelOrder,
+    getAllOrders,
+    getMonthlySalesAnalytics,
 } from "../controllers/order.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT, isAdmin } from "../middlewares/auth.middleware.js";
 
 const router = Router();
-router.use(verifyJWT)
 
-router.post("/createOrder" , createOrder)
-router.get("/UserOrder" , getUserOrders)
-router.get("/CheckOrder/:orderId" , getOrderById)
+router.use(verifyJWT);
 
+router.post("/create", createOrder);
+router.get("/my-orders", getUserOrders);
+router.get("/:orderId", getOrderById);
+router.patch("/:orderId/cancel", cancelOrder);
+
+router.get("/", isAdmin, getAllOrders);
+router.patch("/:orderId/status", isAdmin, updateOrderStatus);
+router.get("/analytics/monthly", isAdmin, getMonthlySalesAnalytics);
 
 export default router;

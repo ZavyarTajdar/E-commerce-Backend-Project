@@ -1,6 +1,4 @@
-import { Product } from "../models/product.models.js"
 import { Order } from "../models/order.models.js"
-import { User } from "../models/user.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -100,32 +98,117 @@ const getOrderById = asyncHandler(async (req, res) => {
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {
-    // TODO: Extract new status from req.body
-    // TODO: Validate status (pending → processing → shipped → delivered)
-    // TODO: Find order by ID
-    // TODO: Update orderStatus
-    // TODO: Save order and return updated order
+    const { orderId } = req.params
+    const { orderStatus } = req.body
+    
+    if (!orderId) {
+        throw new ApiError(400, "Order Is Is Required")
+    }
+    
+    if (!orderStatus) {
+        throw new ApiError(400, "Order status Must Be Updated")
+    }
+
+    const validStatus =  ["pending", "processing", "shipped", "delivered", "cancelled"];
+
+    if (!validStatus.includes(orderStatus)) {
+        throw new ApiError(400, `Invalid status. Allowed: ${validStatus.join(", ")}`);
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, order , "Order Status Updated Successfully")
+    )
 });
 
 const cancelOrder = asyncHandler(async (req, res) => {
-    // TODO: Extract order ID
-    // TODO: Find order and verify ownership or admin access
-    // TODO: Check if order is cancellable (not shipped/delivered)
-    // TODO: Update status to "cancelled"
-    // TODO: Save order and return confirmation
+    const { orderId } = req.params
+    if (!orderId) {
+        throw new ApiError(400, "Order Is Is Required")
+    }
+    
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    if (["shipped", "delivered"].includes(order.orderStatus)) {
+        throw new ApiError(400, "Order cannot be cancelled after being shipped or delivered");
+    }
+
+    order.orderStatus = "cancelled";
+    await order.save()
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, order , "Order Cancelled Successfully")
+    )
 });
 
 const getAllOrders = asyncHandler(async (req, res) => {
-    // TODO: Admin only - fetch all orders
-    // TODO: Populate user details
-    // TODO: Sort by latest created
-    // TODO: Return all orders
+    const orders = await Order.find().
+    populate("items.product" , "title description price sku barcode").
+    populate("user", "_id username email")
+    .sort({createdAt : -1})
+
+    if (!orders.length) {
+        throw new ApiError(404, "No orders found");
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, orders , "All Order Fetched Successfully")
+    )
 });
 
 const getMonthlySalesAnalytics = asyncHandler(async (req, res) => {
-    // TODO: Aggregate orders by month
-    // TODO: Calculate total revenue and total orders per month
-    // TODO: Return formatted analytics data
+    const analytics = await Order.aggregate([
+        {
+            $group: {
+                _id: { 
+                    year: { $year: "$createdAt" },
+                    month: { $month: "$createdAt" }
+                },
+                totalRevenue: { $sum: "$totalAmount" },
+                totalOrders: { $sum: 1 }
+            }
+        },
+        {
+            $sort: { "_id.year": 1, "_id.month": 1 }
+        },
+        {
+            $project: {
+                _id: 0,
+                year: "$_id.year",
+                month: "$_id.month",
+                totalRevenue: 1,
+                totalOrders: 1
+            }
+        }
+    ]);
+
+    const formatted = analytics.map(item => ({
+        year: item.year,
+        month: item.month,
+        totalRevenue: item.totalRevenue,
+        totalOrders: item.totalOrders
+    }));
+
+    return res.status(200).json(
+        new ApiResponse(200, formatted, "Monthly sales analytics fetched successfully")
+    );
+
 });
 export {
     createOrder,
