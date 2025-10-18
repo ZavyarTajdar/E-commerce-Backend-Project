@@ -2,11 +2,11 @@ import { Order } from "../models/order.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import { Address } from "../models/address.models.js"
 
 const createOrder = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const cart = req.cart
-
     const { shippingAddress } = req.body
 
     if (!shippingAddress) {
@@ -15,6 +15,39 @@ const createOrder = asyncHandler(async (req, res) => {
 
     if (!cart || cart.items.length === 0) {
         throw new ApiError(400, "Cart is empty")
+    }
+
+    let addressId
+
+    if (shippingAddress.addressId) {
+        const existingAddress = await Address.findOne({
+            _id: shippingAddress.addressId,
+            user: userId,
+        })
+
+        if (!existingAddress) {
+            throw new ApiError(404, "Address not found or not yours");
+        }
+
+
+        addressId = existingAddress._id
+    } else {
+        const { street, city, state, postalCode, country } = shippingAddress;
+
+        if (!(street && city && state && postalCode && country)) {
+            throw new ApiError(400, "Incomplete address details");
+        }
+
+        const newAddress = await Address.create({
+            user: userId,
+            street,
+            city,
+            state,
+            postalCode,
+            country,
+        });
+
+        addressId = newAddress._id;
     }
 
     const totalAmount = cart.items.reduce((acc, item) => {
@@ -30,17 +63,10 @@ const createOrder = asyncHandler(async (req, res) => {
             price: item.price,
             quantity: item.quantity,
         })),
-        shippingAddress: {
-            fullName: shippingAddress.fullName,
-            street: shippingAddress.street,
-            city: shippingAddress.city,
-            state: shippingAddress.state,
-            postalCode: shippingAddress.postalCode,
-            country: shippingAddress.country,
-        },
+        shippingAddress: addressId,
         totalAmount,
         orderStatus: "pending",
-        paymentStatus: "unpaid",
+        paymentStatus: "unpaid"
     });
 
     cart.items = [];
@@ -57,21 +83,21 @@ const getUserOrders = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
     const orders = await Order.find({ user: userId })
-    .populate("items.product", "name price")
-    .sort({ createdAt: -1 })
-    .lean()
+        .populate("items.product", "name price")
+        .sort({ createdAt: -1 })
+        .lean()
 
     if (!orders || orders.length === 0) {
         return res
-        .status(200)
-        .json(new ApiResponse(200, [], "No orders found for this user"));
+            .status(200)
+            .json(new ApiResponse(200, [], "No orders found for this user"));
     }
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, orders, "User orders fetched successfully")
-    );
+        .status(200)
+        .json(
+            new ApiResponse(200, orders, "User orders fetched successfully")
+        );
 });
 
 const getOrderById = asyncHandler(async (req, res) => {
@@ -82,8 +108,8 @@ const getOrderById = asyncHandler(async (req, res) => {
     }
 
     const order = await Order.findById(orderId).
-    populate("items.product" , "title description price sku barcode").
-    populate("user", "_id username email")
+        populate("items.product", "title description price sku barcode").
+        populate("user", "_id username email")
 
 
     if (!order) {
@@ -91,25 +117,25 @@ const getOrderById = asyncHandler(async (req, res) => {
     }
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, order, "Order Fetched Successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, order, "Order Fetched Successfully")
+        )
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {
     const { orderId } = req.params
     const { orderStatus } = req.body
-    
+
     if (!orderId) {
         throw new ApiError(400, "Order Is Is Required")
     }
-    
+
     if (!orderStatus) {
         throw new ApiError(400, "Order status Must Be Updated")
     }
 
-    const validStatus =  ["pending", "processing", "shipped", "delivered", "cancelled"];
+    const validStatus = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
     if (!validStatus.includes(orderStatus)) {
         throw new ApiError(400, `Invalid status. Allowed: ${validStatus.join(", ")}`);
@@ -124,10 +150,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     await order.save();
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, order , "Order Status Updated Successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, order, "Order Status Updated Successfully")
+        )
 });
 
 const cancelOrder = asyncHandler(async (req, res) => {
@@ -135,7 +161,7 @@ const cancelOrder = asyncHandler(async (req, res) => {
     if (!orderId) {
         throw new ApiError(400, "Order Is Is Required")
     }
-    
+
     const order = await Order.findById(orderId);
     if (!order) {
         throw new ApiError(404, "Order not found");
@@ -149,34 +175,34 @@ const cancelOrder = asyncHandler(async (req, res) => {
     await order.save()
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, order , "Order Cancelled Successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, order, "Order Cancelled Successfully")
+        )
 });
 
 const getAllOrders = asyncHandler(async (req, res) => {
     const orders = await Order.find().
-    populate("items.product" , "title description price sku barcode").
-    populate("user", "_id username email")
-    .sort({createdAt : -1})
+        populate("items.product", "title description price sku barcode").
+        populate("user", "_id username email")
+        .sort({ createdAt: -1 })
 
     if (!orders.length) {
         throw new ApiError(404, "No orders found");
     }
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, orders , "All Order Fetched Successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, orders, "All Order Fetched Successfully")
+        )
 });
 
 const getMonthlySalesAnalytics = asyncHandler(async (req, res) => {
     const analytics = await Order.aggregate([
         {
             $group: {
-                _id: { 
+                _id: {
                     year: { $year: "$createdAt" },
                     month: { $month: "$createdAt" }
                 },
