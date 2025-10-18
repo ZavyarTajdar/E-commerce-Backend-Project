@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { Address } from "../models/address.models.js"
 
-const CreateAddress = asyncHandler(async (req, res) => {
+const createAddress = asyncHandler(async (req, res) => {
     const userId = req.user._id
     const user = await User.findById(userId)
 
@@ -48,7 +48,7 @@ const CreateAddress = asyncHandler(async (req, res) => {
         )
 });
 
-const UpdateAddress = asyncHandler(async (req, res) => {
+const updateAddress = asyncHandler(async (req, res) => {
     const userId = req.user._id
     const { addressId } = req.params
     if (!addressId) {
@@ -123,8 +123,8 @@ const getAllAddresses = asyncHandler(async (req, res) => {
 });
 
 export {
-    CreateAddress,
-    UpdateAddress,
+    createAddress,
+    updateAddress,
     deleteAddress,
     getAllAddresses
 }

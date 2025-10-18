@@ -8,9 +8,7 @@ import {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    deleteUserAccount,
-    CreateAddress,
-    GetUserAdresses
+    deleteUserAccount
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -29,8 +27,5 @@ router.get("/me", verifyJWT, getCurrentUser);
 router.put("/update", verifyJWT, updateAccountDetails);
 router.put("/update-avatar", verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.delete("/delete", verifyJWT, deleteUserAccount);
-router.post("/create-address", verifyJWT, CreateAddress);
-router.get("/fetch-address", verifyJWT, GetUserAdresses);
-
 
 export default router;

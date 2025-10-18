@@ -286,6 +286,4 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     deleteUserAccount,
-    CreateAddress,
-    GetUserAdresses
 }
