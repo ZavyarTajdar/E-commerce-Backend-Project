@@ -276,56 +276,6 @@ const deleteUserAccount = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User Deleted Successfully"))
 })
 
-const CreateAddress = asyncHandler(async (req, res) => {
-    const { street, city, state, postalCode, country } = req.body;
-
-    if (!(street && city && state && postalCode && country)) {
-        throw new ApiError(400, "All fields are strictly required!");
-    }
-
-    const userId = req.user._id; // assuming user is authenticated via JWT
-
-    // Find the user
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User not found!");
-    }
-
-    const existedaddress = user.address.find(addr => addr.country === country 
-        && addr.city === city && addr.state === state && addr.postalCode === postalCode 
-        && addr.street === street
-    );
-
-    if (existedaddress) {
-        throw new ApiError(400, "Address already exists!");
-    }
-
-    // Push new address into user's address array
-    const newAddress = {
-        street,
-        city,
-        state,
-        postalCode,
-        country
-    };
-
-    user.address.push(newAddress);
-    await user.save();
-
-    return res.status(201).json(
-        new ApiResponse(201, user.address, "Address created successfully")
-    );
-});
-
-const GetUserAdresses = asyncHandler(async (req, res) => {
-    const userAddresses = req.user.address
-    const user = req.user._id
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, userAddresses, user, "Details Fetched To User")
-    )
-})
 export {
     registerUser,
     loginUser,

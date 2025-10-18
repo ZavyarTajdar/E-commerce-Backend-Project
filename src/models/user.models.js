@@ -38,7 +38,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    address: [{
+    addresses: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Address"
     }],

@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const AddressSchema = new mongoose.Schema({
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
     street: {
         type: String 
     },
@@ -17,6 +22,11 @@ const AddressSchema = new mongoose.Schema({
         type: String, 
         default: "Pakistan" 
     },
+    type: { 
+        type: String, 
+        enum: ["home", "office"], 
+        default: "home" 
+    }
 },{timestamps : true})
 
 
