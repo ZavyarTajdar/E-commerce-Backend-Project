@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import { type } from "os";
-import { ref } from "process";
-
 const OrderSchema = new mongoose.Schema(
   {
     user: {
