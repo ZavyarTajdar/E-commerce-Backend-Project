@@ -2,7 +2,6 @@ import { Order } from "../models/order.models.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { Address } from "../models/address.models.js"
 import { Payment } from "../models/payment.models.js"
 
 
@@ -102,22 +101,57 @@ const getPaymentById = asyncHandler(async (req, res) => {
 });
 
 const updatePaymentStatus = asyncHandler(async (req, res) => {
-    // TODO: Check if the user has admin privileges
-    // TODO: Extract paymentId and newStatus from req.body
-    // TODO: Validate newStatus (paid, failed, refunded)
-    // TODO: Update paymentStatus in DB
-    // TODO: Reflect change in related Order if needed
-    // TODO: Return updated payment
+    const { paymentId } = req.params;
+    if (!paymentId) {
+        throw new ApiError(400, "Payment Id Is required");
+    }
+
+    const { newStatus } = req.body
+    const validStatuses = ["paid", "failed", "refunded"];
+    if (!validStatuses.includes(newStatus)) {
+        throw new ApiError(400, "Invalid payment status");
+    }
+
+    const payment = await Payment.findById(paymentId);
+    if (!payment) {
+        throw new ApiError(404, "Payment not found");
+    }
+
+    payment.paymentStatus = newStatus;
+    await payment.save();
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, payment, "Payment status updated successfully"));
+
 });
 
 const getAllPayments = asyncHandler(async (req, res) => {
-    // TODO: Verify admin access
-    // TODO: Fetch all payments, populate user and order info
-    // TODO: Add filters (status, date range) if needed
-    // TODO: Sort by newest first
-    // TODO: Return payments in ApiResponse
-});
+    const { status, startDate, endDate } = req.query;
+    const filter = {};
 
+    if (status) {
+        filter.paymentStatus = status; 
+    }
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) {
+            filter.createdAt.$gte = new Date(startDate);
+        }
+        if (endDate) {
+            filter.createdAt.$lte = new Date(endDate);
+        }
+    }
+
+    const payments = await Payment.find(filter)
+        .populate("user", "name email")
+        .populate("order", "orderStatus totalAmount items")
+        .sort({ createdAt: -1 });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payments, "Payments fetched successfully"));
+});
 
 export {
     createPayment,
