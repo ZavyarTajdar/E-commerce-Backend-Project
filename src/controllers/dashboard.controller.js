@@ -1,10 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { Product } from "../models/product.model.js"
-import { User } from "../models/user.model.js"
-import { Order } from "../models/order.model.js"
-import { Review } from "../models/review.model.js"
+import { Product } from "../models/product.models.js"
+import { User } from "../models/user.models.js"
+import { Order } from "../models/order.models.js"
+import { Review } from "../models/review.models.js"
 
 const getDashboardStats = asyncHandler(async (req, res, next) => {
     const stats = {
