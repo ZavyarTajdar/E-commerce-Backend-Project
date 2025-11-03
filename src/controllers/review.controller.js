@@ -47,11 +47,25 @@ const CreateReview = asyncHandler(async (req, res) => {
         throw new ApiError(400, "You have already reviewed this product");
     }
 
+    let imagesUrl = [];
+    if (req.files && req.files.images && req.files.images.length > 0) {
+        imagesUrl = await Promise.all(
+            req.files.image.map(file => uploadOnCloudinary(file.path))
+        );
+    }
+
+    let videoUrl = null;
+    if (req.files?.video?.[0]) {
+        const uploadedVideo = await uploadOnCloudinary(req.files.video[0].path);
+        videoUrl = uploadedVideo?.url || null;
+    }
     const review = await Review.create({
         user: userId,
         product: productId,
         rating,
         content,
+        images: imagesUrl || [],
+        video: videoUrl || null
     });
 
     product.review.push(review._id)
@@ -60,6 +74,82 @@ const CreateReview = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(201, "Review created successfully", review))
 })
 
+const updateReview = asyncHandler(async (req, res) => {
+    const { reviewId } = req.params
+    const { rating, content } = req.body
+
+    const userId = req.user._id
+    const review = await Review.findById(reviewId)
+
+    if (!review) {
+        throw new ApiError(404, "Review not found")
+    }
+
+    const now = new Date()
+    const diffInMinutes = (now - review.createdAt) / (1000 * 60)
+
+    if (diffInMinutes > 30) {
+        throw new ApiError(400, "You can update review within 30 minutes of creation")
+    }
+
+    if (review.user.toString() !== userId) {
+        throw new ApiError(403, "You are not allowed to update this review")
+    }
+    review.rating = rating || review.rating
+    review.content = content || review.content
+    await review.save()
+
+    res.status(200).json(new ApiResponse(200, "Review updated successfully", review))
+})
+
+const removeReview = asyncHandler(async (req, res) => {
+    const { reviewId } = req.params
+    const userId = req.user._id
+    const review = await Review.findById(reviewId)
+
+    if (!review) {
+        throw new ApiError(404, "Review not found")
+    }
+    if (review.user.toString() !== userId) {
+        throw new ApiError(403, "You are not allowed to delete this review")
+    }
+    await review.remove()
+
+    res.status(200).json(new ApiResponse(200, "Review deleted successfully"))
+})
+
+const ToggleLikeReview = asyncHandler(async (req, res) => {
+    const { reviewId } = req.params
+    const userId = req.user._id
+
+    const review = await Review.findById(reviewId)
+
+    if (!review) {
+        throw new ApiError(404, "Review not found")
+    }
+    let likeCount = 0
+    if (review.likes.includes(userId)) {
+        review.likes.pull(userId)
+        likeCount = likeCount - 1
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Review Unliked successfully", review)
+            )
+    } else {
+        review.likes.push(userId)
+        likeCount = likeCount + 1
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, "Review liked successfully", review)
+        )
+    }
+})
+
 export {
-    CreateReview
+    CreateReview,
+    updateReview,
+    removeReview,
+    ToggleLikeReview
 }

@@ -14,6 +14,18 @@ const ReviewSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
     },
+    like : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    }],
+    video : {
+        type: String,
+        max : 1
+    },
+    images : [{
+        type: String,
+        max : 5
+    }],
     rating : {
         type : Number,
         required : true,
